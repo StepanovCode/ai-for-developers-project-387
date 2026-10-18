@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 60" fill="none">
+  <defs>
+    <linearGradient id="lavender" x1="39" y1="5" x2="68" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B8A8FF" />
+      <stop offset="1" stop-color="#5662F5" />
+    </linearGradient>
+    <linearGradient id="blue" x1="18" y1="4" x2="34" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3165FA" />
+      <stop offset="1" stop-color="#1335D3" />
+    </linearGradient>
+    <linearGradient id="fold" x1="29" y1="23" x2="50" y2="53" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7E87FC" />
+      <stop offset="1" stop-color="#AFA7FF" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M28 44V28C28 14 39 4 52 4S76 14 76 28V44C76 51 72 56 66 56S56 51 56 44V29C56 25 54 23 51 23S47 25 47 29V44C47 51 43 56 37 56S28 51 28 44Z"
+    fill="url(#lavender)"
+  />
+  <path d="M28 29C28 25 30 23 33 23L49 44C49 51 44 56 38 56S28 51 28 44V29Z" fill="url(#fold)" />
+  <path
+    d="M2 44V28C2 14 12 4 25 4C38 4 50 19 49 35V48L30 27C27 23 25 23 24 23C21 23 21 26 21 29V44C21 51 17 56 11 56S2 51 2 44Z"
+    fill="url(#blue)"
+  />
+</svg>
