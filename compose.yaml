@@ -1,0 +1,130 @@
+name: ai-for-developers-project-387
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+      POSTGRES_DB: booking
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d booking"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  postgres-test:
+    profiles: ["test"]
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: booking_test
+      POSTGRES_PASSWORD: booking_test
+      POSTGRES_DB: booking_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_test -d booking_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  api-node:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    working_dir: /workspace/api
+    environment:
+      NPM_CONFIG_CACHE: /cache/npm
+    volumes:
+      - ./api:/workspace/api
+      - api_node_modules:/workspace/api/node_modules
+      - ./frontend/src/api:/workspace/frontend/src/api
+      - npm_cache:/cache/npm
+
+  api-go:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    working_dir: /workspace/api/generator
+    environment:
+      GOFLAGS: -mod=readonly
+      GOMODCACHE: /go/pkg/mod
+      GOCACHE: /cache/go-build
+      GOTOOLCHAIN: local
+    volumes:
+      - ./api:/workspace/api
+      - ./backend/internal/api/generated:/workspace/backend/internal/api/generated
+      - go_modules:/go/pkg/mod
+      - go_build_cache:/cache/go-build
+
+  tooling:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/tooling.Dockerfile
+    working_dir: /workspace
+    environment:
+      NPM_CONFIG_CACHE: /cache/npm
+    volumes:
+      - .:/workspace:ro
+      - ./tools:/workspace/tools
+      - tooling_node_modules:/workspace/tools/node_modules
+      - npm_cache:/cache/npm
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    working_dir: /workspace/frontend
+    init: true
+    command: ["npm", "run", "dev"]
+    environment:
+      NPM_CONFIG_CACHE: /cache/npm
+    volumes:
+      - ./frontend:/workspace/frontend
+      - frontend_node_modules:/workspace/frontend/node_modules
+      - npm_cache:/cache/npm
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
+      - "127.0.0.1:${FRONTEND_PREVIEW_PORT:-4173}:4173"
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    working_dir: /workspace/backend
+    init: true
+    command: ["sh", "-c", "go build -o /tmp/api ./cmd/api && exec /tmp/api"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 10s
+    environment:
+      PORT: "8080"
+      DATABASE_URL: ${DATABASE_URL:-postgres://booking:booking@postgres:5432/booking?sslmode=disable}
+      OWNER_NAME: ${OWNER_NAME:-Дмитрий Степанов}
+      WORK_SCHEDULE: ${WORK_SCHEDULE:-}
+      GIN_MODE: release
+      GOFLAGS: -mod=readonly
+      GOMODCACHE: /go/pkg/mod
+      GOCACHE: /cache/go-build
+      GOTOOLCHAIN: local
+    volumes:
+      - ./backend:/workspace/backend
+      - go_modules:/go/pkg/mod
+      - go_build_cache:/cache/go-build
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
+
+volumes:
+  postgres_data:
+  api_node_modules:
+  tooling_node_modules:
+  frontend_node_modules:
+  npm_cache:
+  go_modules:
+  go_build_cache:

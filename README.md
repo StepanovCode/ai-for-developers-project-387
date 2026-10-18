@@ -1,39 +1,27 @@
-# Календарь звонков (продолжение)
+# Meetly
 
+[![hexlet-check](https://github.com/StepanovCode/ai-for-developers-project-386/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/StepanovCode/ai-for-developers-project-386/actions/workflows/hexlet-check.yml)
 
-[![hexlet-check](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/StepanovCode/ai-for-developers-project-387/actions)
+Сервис записи на звонки: выбор свободного времени, бронирование и управление
+встречами. Учебный проект Хекслета на React, TypeScript, Go и PostgreSQL.
 
-Интегрируйте работу агентов в GitHub проект
+**[Открыть сайт →](https://ai-for-developers-project-386-al08.onrender.com/)**
 
-Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
-Как это должно работать: https://files.hexlet.app/a/2ipc5m
+## Локальный запуск
 
-## Стек
-
-- Разное
-
-## Установка
-
-<!-- Опишите установку: клонирование, зависимости, переменные окружения -->
+Нужны Git, Make и запущенный Docker с Compose v2. Все зависимости работают
+в контейнерах.
 
 ```bash
-git clone https://github.com/StepanovCode/ai-for-developers-project-387.git
-cd ai-for-developers-project-387
+git clone https://github.com/StepanovCode/ai-for-developers-project-386.git
+cd ai-for-developers-project-386
+make start
 ```
 
-## Использование
+Откройте [localhost:5173](http://localhost:5173). Команда установит зависимости,
+применит миграции и запустит приложение; `.env` создавать необязательно.
 
-<!-- Добавьте примеры запуска и запись asciinema — именно это смотрит работодатель -->
+- `make down` — остановить приложение, сохранив данные.
+- `make check` — запустить линтеры, тесты и сборку.
 
----
-
-<details>
-<summary>Автоматические тесты Хекслета</summary>
-
-Тесты запускаются на каждый коммит. За запуск отвечает файл `.github/workflows/hexlet-check.yml` — не удаляйте и не переименовывайте ни его, ни репозиторий.
-
-</details>
-
-## О Хекслете
-
-[Хекслет](https://ru.hexlet.io/) — школа программирования: авторские программы обучения с практикой, поддержкой наставников и реальными проектами, которые остаются в резюме. Этот репозиторий — один из таких проектов.
+Подробнее: [Frontend](frontend/README.md) · [Backend](backend/README.md) · [API](api/README.md).
