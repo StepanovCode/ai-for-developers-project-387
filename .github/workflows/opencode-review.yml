@@ -44,10 +44,10 @@ jobs:
             const fs = require('node:fs');
             const pr = context.payload.pull_request;
             const args = { ...context.repo, pull_number: pr.number };
-            const { data: diff } = await github.pulls.get({
+            const { data: diff } = await github.rest.pulls.get({
               ...args, headers: { accept: 'application/vnd.github.diff' },
             });
-            const commits = await github.paginate(github.pulls.listCommits, args);
+            const commits = await github.paginate(github.rest.pulls.listCommits, args);
             const metadata = {
               url: pr.html_url, title: pr.title, body: pr.body,
               base: pr.base.sha, head: pr.head.sha,
@@ -107,7 +107,7 @@ jobs:
           script: |
             const fs = require('node:fs');
             const pr = context.payload.pull_request;
-            const { data: current } = await github.pulls.get({ ...context.repo, pull_number: pr.number });
+            const { data: current } = await github.rest.pulls.get({ ...context.repo, pull_number: pr.number });
             if (current.state !== 'open' || current.head.sha !== pr.head.sha) {
               core.notice('PR changed or closed during review; skipping the outdated report.');
               return;
@@ -115,7 +115,7 @@ jobs:
             const report = fs.readFileSync(`${process.env.REVIEW_DIR}/report.md`, 'utf8').trim();
             if (!report) throw new Error('Refusing to publish an empty review');
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            await github.issues.createComment({
+            await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number,
               body: `## OpenCode PR Review\n\n${report}\n\nCommit: ${pr.head.sha}\n[GitHub Actions](${run})`,
             });
