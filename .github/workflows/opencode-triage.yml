@@ -34,9 +34,10 @@ jobs:
         uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a # latest on 2026-10-18
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          OPENCODE_CONFIG_CONTENT: '{"small_model":"opencode/deepseek-v4.1-flash"}'
+          OPENCODE_CONFIG_CONTENT: '{"small_model":"opencode/deepseek-v4.1-flash","share":"disabled"}'
         with:
           model: opencode/deepseek-v4.1-flash
+          share: false
           prompt: |
             Выполни первичный технический разбор новой issue и опубликуй один
             комментарий по-русски. Прочитай заголовок, описание и все имеющиеся
