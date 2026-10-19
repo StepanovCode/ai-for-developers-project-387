@@ -35,10 +35,15 @@ The hexlet-check.yml file is responsible for running these tests - do not delete
 - Единственное право токена workflow — `id-token: write`. Через OIDC OpenCode
   получает токен установленного GitHub App и выполняет GitHub-операции его правами.
   `persist-credentials: false` запрещает checkout сохранять токен раннера в Git.
-- `model: opencode/claude-haiku-4-5` выбирает Claude Haiku 4.5 через провайдера
-  OpenCode. Ему передаётся только ссылка на секрет `OPENCODE_API_KEY`.
+- `model: opencode/deepseek-v4.1-flash` выбирает DeepSeek V4.1 Flash через
+  провайдера OpenCode. Ключ берётся из секрета `OPENCODE_API_KEY`.
+  Через `OPENCODE_CONFIG_CONTENT` параметр `small_model` задаёт ту же модель
+  для служебных задач, включая генерацию заголовков сессий. Это исключает
+  автоматический выбор другой модели, которая может быть недоступна ключу курса.
   Если ключу курса недоступна модель, уточните доступные модели у куратора
-  и обновите значение `model` вместе с этим описанием.
+  и обновите `model`, `small_model` и это описание.
+  Выбран идентификатор без суффикса `-free`; доступ и стоимость определяются
+  провайдером и настройками ключа.
 - При отсутствии ключа шаг `Require OpenCode API key` завершает job с понятной
   ошибкой. Лимит времени job — 20 минут; это не заменяет лимит расходов провайдера.
 
