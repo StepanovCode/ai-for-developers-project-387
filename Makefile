@@ -223,7 +223,7 @@ commitlint:
 	@$(RUN) tooling tools/node_modules/.bin/commitlint --config tools/commitlint.config.mjs
 
 workflows-check:
-	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo rhysd/actionlint:1.7.12 -color .github/workflows/ci.yml .github/workflows/release-please.yml .github/workflows/opencode.yml .github/workflows/opencode-triage.yml
+	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo rhysd/actionlint:1.7.12 -color .github/workflows/ci.yml .github/workflows/release-please.yml .github/workflows/opencode.yml .github/workflows/opencode-triage.yml .github/workflows/opencode-review.yml
 
 .PHONY: db-up migrate database-test
 

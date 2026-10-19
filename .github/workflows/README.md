@@ -8,7 +8,8 @@ The hexlet-check.yml file is responsible for running these tests - do not delete
 
 Агент запускается в GitHub Actions независимо от локального Codex.
 Обработчик команд находится в [opencode.yml](opencode.yml), автоматический
-разбор новых issue — в [opencode-triage.yml](opencode-triage.yml).
+разбор новых issue — в [opencode-triage.yml](opencode-triage.yml), авторевью
+pull request — в [opencode-review.yml](opencode-review.yml).
 
 ### Подключение
 
@@ -93,3 +94,42 @@ OpenCode дополнительно требует у инициатора пр�
 и учитывайте отличия инструкций в комментарии и в `prompt`.
 
 Справка: [OpenCode в GitHub](https://opencode.ai/docs/github/).
+
+### Автоматическое ревью pull request
+
+Workflow `OpenCode PR Review` запускается на `pull_request` с типами
+`opened`, `synchronize`, `reopened`, `ready_for_review`. Он проверяет PR
+из веток этого репозитория, включая PR агента и release-please. PR из форков
+пропускаются: GitHub не передаёт им `OPENCODE_API_KEY` и токен с правом записи.
+Для одного PR новый запуск отменяет предыдущий незавершённый запуск ревью.
+
+Критерии в `prompt`: соответствие issue, ошибки и граничные условия,
+регрессионные тесты, архитектура из AGENTS.md, терминология GLOSSARY.md,
+Conventional Commits. Агент публикует обоснованные замечания или сообщает,
+что проблем не нашёл. Этот запуск не исправляет код, не одобряет и не сливает PR;
+правки по вашим командам выполняет отдельный workflow `OpenCode`.
+
+`use_github_token: true` и `GITHUB_TOKEN` используют токен раннера вместо
+обмена на токен OpenCode App. `contents: read` разрешает чтение кода,
+`issues: read` — чтение исходного issue, `pull-requests: write` — публикацию
+результата ревью. Одних прав чтения для комментариев недостаточно:
+[GitHub API требует право записи](https://docs.github.com/en/rest/issues/comments#create-an-issue-comment).
+`id-token: write` сохранён как в примере OpenCode, но при прямом использовании
+`GITHUB_TOKEN` обмен OIDC не выполняется. `persist-credentials: false`
+не сохраняет токен в Git; полная история нужна для проверки коммитов.
+Основная и служебная модели, секрет провайдера и лимит времени совпадают
+с другими workflow OpenCode. Каждый запуск обращается к провайдеру модели.
+
+Для проверки откройте новый PR из ветки репозитория и дождитесь результата
+`OpenCode PR Review` в Actions и опубликованного комментария агента в PR.
+После следующего коммита проверьте повторный запуск на `synchronize`.
+Успешный `make workflows-check` подтверждает синтаксис, но не публикацию ревью.
+Если GitHub запрещает создание review токеном Actions, проверьте настройку
+Settings → Actions → General → Workflow permissions → Allow GitHub Actions
+to create and approve pull requests; политику репозитория меняет владелец.
+
+### Релизы
+
+Workflow `release-please` запускается после push в `main`. Настройки,
+подготовка `RELEASE_PLEASE_TOKEN` и проверка release-PR описаны
+в [инструкции по релизам](../../docs/releases.md).
