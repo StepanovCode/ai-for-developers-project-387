@@ -232,7 +232,7 @@ review-report-test:
 # The repository and supplied PR context are mounted read-only during inference.
 opencode-review:
 	$(if $(strip $(REVIEW_DIR)),,$(error Specify REVIEW_DIR containing context.txt))
-	$(RUN) -e OPENCODE_API_KEY -e OPENCODE_CONFIG_CONTENT -e REVIEW_PROMPT -v "$(REVIEW_DIR):/review:ro" tooling sh -ec 'npm exec --yes --package=opencode-ai@1.19.3 -- opencode run --format json --agent review --model opencode/deepseek-v4.1-flash --file /review/context.txt -- "$$REVIEW_PROMPT"' > "$(REVIEW_DIR)/events.jsonl"
+	$(RUN) -e OPENCODE_API_KEY -e OPENCODE_CONFIG_CONTENT -e REVIEW_PROMPT -e OPENCODE_DISABLE_PROJECT_CONFIG=true -e OPENCODE_PURE=true -v "$(REVIEW_DIR):/review:ro" tooling sh -ec 'npm exec --yes --package=opencode-ai@1.19.3 -- opencode run --format json --agent review --model opencode/deepseek-v4.1-flash --file /review/context.txt -- "$$REVIEW_PROMPT"' > "$(REVIEW_DIR)/events.jsonl"
 	$(RUN) -v "$(REVIEW_DIR):/review" tooling node .github/scripts/review-report.mjs /review/events.jsonl /review/report.md
 
 .PHONY: db-up migrate database-test

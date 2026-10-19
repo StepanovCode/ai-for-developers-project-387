@@ -13,7 +13,7 @@ test('publishes only the final assistant message, without tool output or reasoni
     { type: 'reasoning', part: { text: 'private reasoning' } },
     { type: 'text', part: { messageID: 'final', text: 'Проблем не найдено.' } },
     { type: 'text', part: { messageID: 'final', text: 'Проверки не запускались.' } },
-    { type: 'step_finish', part: { reason: 'stop' } },
+    { type: 'step_finish', part: { messageID: 'final', reason: 'stop' } },
   ));
   assert.equal(report, 'Проблем не найдено.\n\nПроверки не запускались.');
 });
@@ -28,7 +28,15 @@ test('provider error rejects a partial report', () => {
 test('interrupted or token-limited responses cannot be published as complete reviews', () => {
   const text = { type: 'text', part: { messageID: 'partial', text: 'Незавершённый отчёт' } };
   assert.throws(() => reviewText(events(text)), /did not complete/);
-  assert.throws(() => reviewText(events(text, { type: 'step_finish', part: { reason: 'length' } })), /did not complete/);
+  assert.throws(() => reviewText(events(text, { type: 'step_finish', part: { messageID: 'partial', reason: 'length' } })), /did not complete/);
+});
+
+test('completion of an earlier message cannot validate a later partial report', () => {
+  assert.throws(() => reviewText(events(
+    { type: 'text', part: { messageID: 'earlier', text: 'Первый ответ' } },
+    { type: 'step_finish', part: { messageID: 'earlier', reason: 'stop' } },
+    { type: 'text', part: { messageID: 'later', text: 'Незавершённый ответ' } },
+  )), /did not complete/);
 });
 
 test('empty or malformed output cannot be published as a successful review', () => {
@@ -40,6 +48,6 @@ test('empty or malformed output cannot be published as a successful review', () 
 test('oversized reports fail before the GitHub comment limit', () => {
   assert.throws(() => reviewText(events(
     { type: 'text', part: { messageID: 'final', text: 'x'.repeat(50001) } },
-    { type: 'step_finish', part: { reason: 'stop' } },
+    { type: 'step_finish', part: { messageID: 'final', reason: 'stop' } },
   )), /too long/);
 });

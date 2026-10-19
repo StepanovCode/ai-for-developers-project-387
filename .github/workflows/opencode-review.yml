@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: read
 
 concurrency:
   group: opencode-review-${{ github.event.pull_request.number }}
