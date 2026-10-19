@@ -24,6 +24,7 @@ RUN = $(COMPOSE) run --rm --no-deps -T
 .PHONY: typecheck frontend-typecheck format-check frontend-format-check backend-format-check
 .PHONY: format frontend-format backend-format check frontend-check backend-check
 .PHONY: tooling-build tooling-install commitlint workflows-check review-report-test opencode-review
+.PHONY: lighthouse-build lighthouse-audit lighthouse-audit-test
 .PHONY: generate api-smoke
 .PHONY: production-build
 
@@ -78,7 +79,9 @@ help:
 	@printf '%s\n' \
 	  'make tooling-build / tooling-install  Prepare commitlint in Docker' \
 	  'make commitlint     Check a commit message from stdin' \
-	  'make workflows-check  Validate CI, release and OpenCode workflows with actionlint'
+	  'make workflows-check  Validate CI, release and OpenCode workflows with actionlint' \
+	  'make lighthouse-build / lighthouse-audit  Audit LIGHTHOUSE_URL in Docker' \
+	  'make lighthouse-audit-test  Test Lighthouse report validation'
 	@printf '%s\n' 'make generate       Generate OpenAPI, frontend SDK and Go server from TypeSpec in Docker'
 	@printf '%s\n' 'make api-smoke      Check SDK against running frontend/backend (make up first)'
 	@printf '%s\n' 'make migrate        Apply ordered PostgreSQL migrations (separate from API startup)' 'make database-test  Test HTTP/storage using isolated PostgreSQL database'
@@ -223,10 +226,21 @@ commitlint:
 	@$(RUN) tooling tools/node_modules/.bin/commitlint --config tools/commitlint.config.mjs
 
 workflows-check:
-	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo rhysd/actionlint:1.7.12 -color .github/workflows/ci.yml .github/workflows/release-please.yml .github/workflows/opencode.yml .github/workflows/opencode-triage.yml .github/workflows/opencode-review.yml
+	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo rhysd/actionlint:1.7.12 -color .github/workflows/ci.yml .github/workflows/release-please.yml .github/workflows/opencode.yml .github/workflows/opencode-triage.yml .github/workflows/opencode-review.yml .github/workflows/opencode-audit.yml
 
 review-report-test:
 	$(RUN) tooling node --test .github/scripts/review-report.test.mjs
+
+lighthouse-audit-test:
+	$(RUN) tooling node --test .github/scripts/lighthouse-report.test.mjs
+
+lighthouse-build:
+	$(COMPOSE) --profile tools build lighthouse
+
+AUDIT_DIR ?= $(CURDIR)/.superpowers/lighthouse-audit
+lighthouse-audit:
+	mkdir -p "$(AUDIT_DIR)"
+	$(RUN) -v "$(AUDIT_DIR):/reports" lighthouse
 
 # Provider credentials enter only the reviewer container; it receives no GitHub token.
 # The repository and supplied PR context are mounted read-only during inference.

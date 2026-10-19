@@ -15,10 +15,12 @@ backend: Go, Gin и PostgreSQL. Контракт API описан в TypeSpec.
 
 ## Issue tracker: GitHub
 
-- Трекер — [GitHub Issues](https://github.com/StepanovCode/ai-for-developers-project-386/issues).
+- Текущий проект и трекер — [GitHub Issues проекта 387](https://github.com/StepanovCode/ai-for-developers-project-387/issues).
   Спецификации и решения публикуйте в Issues; локальный черновик не заменяет публикацию.
-- Перед продолжением [карты решений](https://github.com/StepanovCode/ai-for-developers-project-386/issues/3)
-  прочитайте её Destination и Notes; подробности вопросов загружайте по необходимости.
+- Перед продолжением карты решений найдите её в текущем трекере по метке
+  `wayfinder:map` и прочитайте Destination и Notes; подробности вопросов загружайте
+  по необходимости. Номера вопросов из предыдущего проекта не переносите в URL
+  текущего: это другие issue.
 - Карта имеет метку `wayfinder:map`, вопросы — native sub-issues с метками
   `wayfinder:grilling`, `wayfinder:research`, `wayfinder:prototype` или `wayfinder:task`.
   Создавайте нужные метки и вопросы до связей; блокировки задавайте native dependencies
