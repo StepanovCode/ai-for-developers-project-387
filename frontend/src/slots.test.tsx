@@ -287,7 +287,10 @@ test.each(['notice', 'window'])(
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: '09:00–09:30 — Свободно' }))
     fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }))
-    expect(await screen.findByText('Это время уже занято. Выберите другой слот')).toBeVisible()
+    expect(
+      await screen.findByText('Это время больше недоступно для бронирования. Выберите другой слот'),
+    ).toBeVisible()
+    expect(screen.queryByText('Это время уже занято. Выберите другой слот')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Продолжить' })).toBeDisabled()
     expect(screen.queryByText(/^Выбрано:/)).not.toBeInTheDocument()
     expect(new URLSearchParams(window.location.search).get('date')).toBe(

@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { getEventType, getSlots } from './api/generated/sdk.gen'
 import type { EventTypeDetails, SlotWindow } from './api/generated/types.gen'
 
+const slotUnavailableNotice = 'Это время больше недоступно для бронирования. Выберите другой слот'
+const slotBusyNotice = 'Это время уже занято. Выберите другой слот'
+
 function displayDate(date: string) {
   return date.split('-').reverse().join('-')
 }
@@ -37,7 +40,7 @@ export function SlotsPage({ id }: { id: string }) {
   const [selected, setSelected] = useState('')
   const [checking, setChecking] = useState(false)
   const [notice, setNotice] = useState(() =>
-    window.history.state?.slotUnavailable ? 'Это время уже занято. Выберите другой слот' : '',
+    window.history.state?.slotUnavailable ? slotUnavailableNotice : '',
   )
   const heading = useRef<HTMLHeadingElement>(null)
   const timesHeading = useRef<HTMLHeadingElement>(null)
@@ -132,13 +135,13 @@ export function SlotsPage({ id }: { id: string }) {
       if (controller.signal.aborted || availabilityCheck.current !== controller) return
       if (!result.data) throw new Error('availability failed')
       const fresh = result.data
-      const available = fresh.days
+      const freshSlot = fresh.days
         .find((day) => day.date === date)
-        ?.slots.some((slot) => slot.startsAt === selected && slot.status === 'available')
+        ?.slots.find((slot) => slot.startsAt === selected)
       setWindowData(fresh)
-      if (!available) {
+      if (freshSlot?.status !== 'available') {
         setSelected('')
-        setNotice('Это время уже занято. Выберите другой слот')
+        setNotice(freshSlot?.status === 'busy' ? slotBusyNotice : slotUnavailableNotice)
         const chosen = chooseDate(fresh, date)
         setDate(chosen)
         setMonth(chosen.slice(0, 7))
