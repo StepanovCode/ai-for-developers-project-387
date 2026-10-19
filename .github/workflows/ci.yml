@@ -51,3 +51,4 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$PR_TITLE" | make commitlint
       - run: make workflows-check
+      - run: make review-report-test
