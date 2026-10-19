@@ -23,7 +23,7 @@ RUN = $(COMPOSE) run --rm --no-deps -T
 .PHONY: lint frontend-lint backend-lint lint-fix frontend-lint-fix backend-lint-fix
 .PHONY: typecheck frontend-typecheck format-check frontend-format-check backend-format-check
 .PHONY: format frontend-format backend-format check frontend-check backend-check
-.PHONY: tooling-build tooling-install commitlint workflows-check
+.PHONY: tooling-build tooling-install commitlint workflows-check review-report-test opencode-review
 .PHONY: generate api-smoke
 .PHONY: production-build
 
@@ -224,6 +224,16 @@ commitlint:
 
 workflows-check:
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo rhysd/actionlint:1.7.12 -color .github/workflows/ci.yml .github/workflows/release-please.yml .github/workflows/opencode.yml .github/workflows/opencode-triage.yml .github/workflows/opencode-review.yml
+
+review-report-test:
+	$(RUN) tooling node --test .github/scripts/review-report.test.mjs
+
+# Provider credentials enter only the reviewer container; it receives no GitHub token.
+# The repository and supplied PR context are mounted read-only during inference.
+opencode-review:
+	$(if $(strip $(REVIEW_DIR)),,$(error Specify REVIEW_DIR containing context.txt))
+	$(RUN) -e OPENCODE_API_KEY -e OPENCODE_CONFIG_CONTENT -e REVIEW_PROMPT -v "$(REVIEW_DIR):/review:ro" tooling sh -ec 'npm exec --yes --package=opencode-ai@1.19.3 -- opencode run --format json --agent review --model opencode/deepseek-v4.1-flash --file /review/context.txt -- "$$REVIEW_PROMPT"' > "$(REVIEW_DIR)/events.jsonl"
+	$(RUN) -v "$(REVIEW_DIR):/review" tooling node .github/scripts/review-report.mjs /review/events.jsonl /review/report.md
 
 .PHONY: db-up migrate database-test
 
