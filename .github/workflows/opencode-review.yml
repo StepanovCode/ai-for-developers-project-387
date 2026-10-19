@@ -15,7 +15,10 @@ concurrency:
 jobs:
   review:
     # Fork pull requests do not receive the provider secret or a writable token.
-    if: github.event.repository.private == false && github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.event.sender.type == 'User' &&
+      github.event.repository.private == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:

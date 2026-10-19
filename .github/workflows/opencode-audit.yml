@@ -7,10 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
   issues: write
-  id-token: write
 
 concurrency:
   group: opencode-lighthouse-audit
@@ -18,6 +16,10 @@ concurrency:
 
 jobs:
   audit:
+    # Scheduled events have no comment sender; dispatch must come from a human.
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.sender.type == 'User')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
