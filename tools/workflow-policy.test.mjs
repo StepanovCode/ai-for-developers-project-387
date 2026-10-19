@@ -19,7 +19,9 @@ function accepts(name, eventName, event) {
   const trigger = workflow.on[eventName];
   if (!Object.hasOwn(workflow.on, eventName)) return false;
   if (trigger?.types && !trigger.types.includes(event.action)) return false;
-  const job = Object.values(workflow.jobs)[0];
+  const jobs = Object.values(workflow.jobs);
+  assert.equal(jobs.length, 1, 'Add explicit policy coverage for every agent job');
+  const [job] = jobs;
   if (!job.if) return true;
   const { tokens } = new Lexer(job.if).lex();
   const expression = new Parser(tokens, ['github'], []).parse();
@@ -100,6 +102,17 @@ test('triage ignores external issues and repeated issue events', () => {
       action, sender: human, issue: { author_association: 'OWNER' },
     }), false);
   }
+});
+
+test('review accepts a normal human-authored PR', () => {
+  assert.equal(accepts('opencode-review', 'pull_request', pullRequest()), true);
+});
+
+test('release-please using the owner PAT is accepted as a User event', () => {
+  const event = pullRequest({ type: 'User', login: 'StepanovCode' });
+  event.pull_request.user = event.sender;
+  event.pull_request.head.ref = 'release-please--branches--main--components--ai-for-developers-project-387';
+  assert.equal(accepts('opencode-review', 'pull_request', event), true);
 });
 
 test('a human updating an app-authored PR can start review', () => {

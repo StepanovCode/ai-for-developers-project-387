@@ -39,14 +39,14 @@ make start
 | [release-please](.github/workflows/release-please.yml) | `push` в `main`, ручной запуск | Не используется | Подготовка release-PR, версии и changelog | [Actions: release-please](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/release-please.yml) |
 | [OpenCode](.github/workflows/opencode.yml) | Новый комментарий в issue, PR или diff с `/opencode` или `/oc` от доверенного человека | `opencode/deepseek-v4.1-flash` | Объяснение или изменение по команде участника | [Actions: OpenCode](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/opencode.yml) |
 | [OpenCode Issue Triage](.github/workflows/opencode-triage.yml) | Новая issue доверенного человека | `opencode/deepseek-v4.1-flash` | Первичный технический разбор, без исправления кода | [Actions: Triage](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/opencode-triage.yml) |
-| [OpenCode PR Review](.github/workflows/opencode-review.yml) | `opened`, `synchronize`, `reopened`, `ready_for_review` PR, инициированные человеком | `opencode/deepseek-v4.1-flash` | Ревью публичного PR из ветки репозитория, без изменения кода | [Actions: Review](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/opencode-review.yml) |
-| [OpenCode Lighthouse Audit](.github/workflows/opencode-audit.yml) | Ежедневно в 03:17 UTC / 06:17 по Москве; ручной запуск человеком | `opencode/deepseek-v4.1-flash` | Анализ Lighthouse, создание или обновление issue с находками | [Actions: Audit](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/opencode-audit.yml) |
+| [OpenCode PR Review](.github/workflows/opencode-review.yml) | `opened`, `synchronize`, `reopened`, `ready_for_review` PR от инициатора типа `User` | `opencode/deepseek-v4.1-flash` | Ревью публичного PR из ветки репозитория, без изменения кода | [Actions: Review](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/opencode-review.yml) |
+| [OpenCode Lighthouse Audit](.github/workflows/opencode-audit.yml) | Ежедневно в 03:17 UTC / 06:17 по Москве; ручной запуск от `User` | `opencode/deepseek-v4.1-flash` | Анализ Lighthouse, создание или обновление issue с находками | [Actions: Audit](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/opencode-audit.yml) |
 
 ### Вызов, права и публикация
 
 Команды `/opencode,/oc` заданы явно в `mentions` и в условии job. Обе оставлены
 для совместимости: `/opencode` — полная форма, `/oc` — короткая. Только новые
-комментарии людей с association `OWNER`, `MEMBER` или `COLLABORATOR` могут
+комментарии аккаунтов типа `User` с association `OWNER`, `MEMBER` или `COLLABORATOR` могут
 вызвать агента; OpenCode дополнительно проверяет право инициатора `admin` или
 `write`. Обычный комментарий, внешний автор, бот или само приложение дают
 `skipped` без вызова модели. Редактирование комментария агента не запускает.
@@ -54,8 +54,11 @@ make start
 
 Авторевью проверяет **инициатора события**, а не автора PR: событие от бота
 пропускается, а обновление PR агента человеком может запустить проверку.
-PR из форков и приватные репозитории пропускаются. Ночной аудит допускает
-запуск по `schedule` без `sender`; ручной запуск требует человека и доступен
+PR из форков и приватные репозитории пропускаются. release-please использует
+PAT владельца, поэтому его события от аккаунта типа `User` проходят фильтр
+и запускают ревью. Тип аккаунта не доказывает, что действие выполнено вручную.
+Ночной аудит допускает
+запуск по `schedule` без `sender`; ручной запуск требует `sender.type == 'User'` и доступен
 участникам с правом запуска Actions. Это исключение для расписания необходимо,
 чтобы фильтр ботов не отключил cron.
 

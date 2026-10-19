@@ -113,7 +113,11 @@ OpenCode дополнительно требует у инициатора пр�
 Workflow `OpenCode PR Review` запускается на `pull_request` с типами
 `opened`, `synchronize`, `reopened`, `ready_for_review`. Он проверяет публичные PR
 из веток этого репозитория. Инициатор события должен иметь тип `User`:
-события от ботов, включая OpenCode App и release-please, пропускаются.
+события от ботов, включая `opencode-agent[bot]` и `github-actions[bot]`,
+пропускаются. release-please в этом проекте использует PAT владельца:
+его события приходят от аккаунта типа `User` и проходят фильтр. Это
+согласовано с [проверкой release-PR](../../docs/releases.md#проверка).
+Фильтр типа аккаунта не отличает ручное действие от автоматизации через PAT.
 Автор PR при этом может быть ботом: обновление или переоткрытие такого PR
 человеком запускает проверку. PR из форков
 пропускаются: GitHub не передаёт им `OPENCODE_API_KEY` и токен с правом записи.
@@ -240,7 +244,7 @@ OIDC-обмен в этом режиме не выполняется, поэто
 make lighthouse-build
 LIGHTHOUSE_URL='<публичный URL>' make lighthouse-audit
 make lighthouse-audit-test
-make workflows-check
+make workflows-check workflows-test
 ```
 
 Локальные отчёты по умолчанию сохраняются в игнорируемом Git каталоге
