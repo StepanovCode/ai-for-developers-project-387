@@ -61,6 +61,18 @@ services:
       - go_modules:/go/pkg/mod
       - go_build_cache:/cache/go-build
 
+  lighthouse:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/lighthouse.Dockerfile
+    working_dir: /workspace
+    init: true
+    environment:
+      LIGHTHOUSE_URL: ${LIGHTHOUSE_URL:-}
+    volumes:
+      - .:/workspace:ro
+
   tooling:
     profiles: ["tools"]
     build:

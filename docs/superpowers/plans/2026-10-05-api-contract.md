@@ -1,5 +1,8 @@
 # API-контракт и генерация — план реализации
 
+Архив выполненного этапа, унаследованный проектом 387. Ссылки ниже ведут к
+исходным обсуждениям; текущий трекер — [GitHub Issues проекта 387](https://github.com/StepanovCode/ai-for-developers-project-387/issues).
+
 > Исполнение: `superpowers:executing-plans`, в текущей сессии.
 
 Цель: выполнить [тикет 15](https://github.com/StepanovCode/ai-for-developers-project-386/issues/15)

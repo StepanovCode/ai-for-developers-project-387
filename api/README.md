@@ -1,7 +1,9 @@
 # API-контракт и генерация
 
 Источник истины — `main.tsp`, по утверждённой
-[спецификации](https://github.com/StepanovCode/ai-for-developers-project-386/issues/14).
+[спецификации](../docs/superpowers/specs/2026-10-07-booking-approved.md),
+унаследованной проектом 387. Новые задачи и решения ведутся в
+[трекере проекта 387](https://github.com/StepanovCode/ai-for-developers-project-387/issues).
 Реализация первого тикета подключает health; остальные семь операций пока
 возвращают 500 / INTERNAL_ERROR после проверки запроса. Они не создают
 объекты и не возвращают фиктивные каталоги. PostgreSQL и бизнес-сценарии

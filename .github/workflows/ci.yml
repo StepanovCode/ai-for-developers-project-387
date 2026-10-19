@@ -52,3 +52,4 @@ jobs:
         run: printf '%s\n' "$PR_TITLE" | make commitlint
       - run: make workflows-check
       - run: make review-report-test
+      - run: make lighthouse-audit-test

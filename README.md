@@ -1,11 +1,15 @@
 # Meetly
 
-[![hexlet-check](https://github.com/StepanovCode/ai-for-developers-project-386/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/StepanovCode/ai-for-developers-project-386/actions/workflows/hexlet-check.yml)
+[![hexlet-check](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/StepanovCode/ai-for-developers-project-387/actions/workflows/hexlet-check.yml)
 
 Сервис записи на звонки: выбор свободного времени, бронирование и управление
 встречами. Учебный проект Хекслета на React, TypeScript, Go и PostgreSQL.
 
+Текущий репозиторий — [проект 387](https://github.com/StepanovCode/ai-for-developers-project-387).
 **[Открыть сайт →](https://ai-for-developers-project-386-al08.onrender.com/)**
+
+Публичный URL приложения для ночной проверки задаётся переменной репозитория
+`LIGHTHOUSE_URL`; настройка описана в [инструкции GitHub Actions](.github/workflows/README.md).
 
 ## Локальный запуск
 
@@ -13,8 +17,8 @@
 в контейнерах.
 
 ```bash
-git clone https://github.com/StepanovCode/ai-for-developers-project-386.git
-cd ai-for-developers-project-386
+git clone https://github.com/StepanovCode/ai-for-developers-project-387.git
+cd ai-for-developers-project-387
 make start
 ```
 
