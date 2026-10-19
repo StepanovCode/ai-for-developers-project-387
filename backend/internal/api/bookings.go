@@ -20,7 +20,7 @@ func (s server) CreateBooking(ctx context.Context, r generated.CreateBookingRequ
 		return nil, &HTTPError{Status: 404, Code: "NOT_FOUND", Message: "Тип события не найден"}
 	}
 	if errors.Is(err, domain.ErrSlotUnavailable) {
-		return nil, &HTTPError{Status: 400, Code: "SLOT_UNAVAILABLE", Message: "Это время уже занято. Выберите другой слот"}
+		return nil, &HTTPError{Status: 400, Code: "SLOT_UNAVAILABLE", Message: "Это время больше недоступно для бронирования. Выберите другой слот"}
 	}
 	var validation *domain.ValidationError
 	if errors.As(err, &validation) {

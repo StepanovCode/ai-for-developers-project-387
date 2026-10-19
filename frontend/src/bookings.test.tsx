@@ -205,7 +205,9 @@ test('400 clears stale slot, refreshes busy choices, and preserves contacts afte
   resilientTransport(unavailable)
   await filledForm()
   fireEvent.click(screen.getByRole('button', { name: 'Забронировать' }))
-  expect(await screen.findByText('Это время уже занято. Выберите другой слот')).toBeVisible()
+  expect(
+    await screen.findByText('Это время больше недоступно для бронирования. Выберите другой слот'),
+  ).toBeVisible()
   expect(await screen.findByRole('button', { name: '09:00–09:30 — Занято' })).toBeDisabled()
   expect(window.location.pathname).toBe(`/book/${id}`)
   expect(window.location.search).not.toContain('slot')
@@ -228,7 +230,9 @@ test('lost response has no automatic retry; explicit repeat can return stale wit
   expect(posts).toBe(1)
   expect(screen.getByLabelText('Имя')).toHaveValue('Сохранён')
   fireEvent.click(screen.getByRole('button', { name: 'Забронировать' }))
-  expect(await screen.findByText('Это время уже занято. Выберите другой слот')).toBeVisible()
+  expect(
+    await screen.findByText('Это время больше недоступно для бронирования. Выберите другой слот'),
+  ).toBeVisible()
   expect(posts).toBe(2)
   for (const [r] of fetch.mock.calls)
     if (r.method === 'POST') {
