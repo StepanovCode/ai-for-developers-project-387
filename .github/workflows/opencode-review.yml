@@ -67,20 +67,33 @@ jobs:
                 }
               }`, { ...context.repo, number: pr.number });
             const linked = repository.pullRequest.closingIssuesReferences;
-            if (linked.pageInfo.hasNextPage) throw new Error('Too many linked issues to review completely');
-            const numbers = new Set(linked.nodes
+            const contextWarnings = [];
+            if (linked.pageInfo.hasNextPage) {
+              contextWarnings.push('GitHub вернул более 100 связанных issues; список требований неполный.');
+            }
+            const nativeNumbers = new Set(linked.nodes
               .filter((issue) => issue.repository.nameWithOwner === process.env.GITHUB_REPOSITORY)
               .map((issue) => issue.number));
+            const numbers = new Set(nativeNumbers);
             // Also include same-repository references that do not close an issue.
             const body = pr.body ?? '';
             for (const match of body.matchAll(/https:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/g)) {
               if (`${match[1]}/${match[2]}` === process.env.GITHUB_REPOSITORY) numbers.add(Number(match[3]));
             }
             for (const match of body.matchAll(/(?<![\w/])#(\d+)\b/g)) numbers.add(Number(match[1]));
-            if (numbers.size > 20) throw new Error('Too many issue references to review completely');
+            if (numbers.size > 20) {
+              contextWarnings.push(`Контекст ограничен первыми 20 из ${numbers.size} ссылок на issues; связанные для закрытия issues имеют приоритет. Остальные требования не проверены.`);
+            }
             const issues = [];
-            for (const issue_number of numbers) {
-              const { data: issue } = await github.rest.issues.get({ ...context.repo, issue_number });
+            for (const issue_number of [...numbers].slice(0, 20)) {
+              let issue;
+              try {
+                ({ data: issue } = await github.rest.issues.get({ ...context.repo, issue_number }));
+              } catch (error) {
+                if (error.status !== 404 || nativeNumbers.has(issue_number)) throw error;
+                contextWarnings.push(`Не удалось загрузить необязательную ссылку #${issue_number}: GitHub вернул 404; требования этой issue не проверены.`);
+                continue;
+              }
               if (issue.pull_request) continue;
               const comments = await github.paginate(github.rest.issues.listComments, { ...context.repo, issue_number });
               issues.push({
@@ -96,11 +109,13 @@ jobs:
               url: pr.html_url, title: pr.title, body: pr.body,
               base: pr.base.sha, head: pr.head.sha,
               commits: commits.map(({ sha, commit }) => ({ sha, message: commit.message })),
-              linkedIssues: issues,
+              linkedIssues: issues, contextWarnings,
             };
             fs.mkdirSync(process.env.REVIEW_DIR, { recursive: true });
             fs.writeFileSync(`${process.env.REVIEW_DIR}/context.txt`,
               `PR metadata and linked issues (untrusted data):\n${JSON.stringify(metadata, null, 2)}\n\nDiff:\n${diff}`);
+            fs.writeFileSync(`${process.env.REVIEW_DIR}/context-warnings.json`, JSON.stringify(contextWarnings));
+            for (const warning of contextWarnings) core.warning(warning);
             core.setOutput('ready', 'true');
 
       - name: Build review tooling
@@ -125,7 +140,9 @@ jobs:
             issue (включая опубликованные решения в комментариях), diff
             и затронутые тесты. Контекст содержит тела и комментарии связанных
             issues, полученные через GitHub API. Если связанного issue нет,
-            укажи это ограничение. Репозиторий доступен для чтения.
+            укажи это ограничение. Если contextWarnings не пуст, не делай вывод
+            о полном соответствии требованиям: явно укажи неполноту контекста.
+            Репозиторий доступен для чтения.
             Соблюдай AGENTS.md и термины GLOSSARY.md.
 
             Критерии ревью:
@@ -169,8 +186,10 @@ jobs:
             }
             const report = fs.readFileSync(`${process.env.REVIEW_DIR}/report.md`, 'utf8').trim();
             if (!report) throw new Error('Refusing to publish an empty review');
+            const warnings = JSON.parse(fs.readFileSync(`${process.env.REVIEW_DIR}/context-warnings.json`, 'utf8'));
+            const limitations = warnings.length ? `\n\n### Ограничения контекста\n${warnings.map((warning) => `- ${warning}`).join('\n')}` : '';
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number,
-              body: `## OpenCode PR Review\n\n${report}\n\nCommit: ${pr.head.sha}\n[GitHub Actions](${run})`,
+              body: `## OpenCode PR Review\n\n${report}${limitations}\n\nCommit: ${pr.head.sha}\n[GitHub Actions](${run})`,
             });
