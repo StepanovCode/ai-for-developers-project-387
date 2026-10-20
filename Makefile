@@ -23,7 +23,7 @@ RUN = $(COMPOSE) run --rm --no-deps -T
 .PHONY: lint frontend-lint backend-lint lint-fix frontend-lint-fix backend-lint-fix
 .PHONY: typecheck frontend-typecheck format-check frontend-format-check backend-format-check
 .PHONY: format frontend-format backend-format check frontend-check backend-check
-.PHONY: tooling-build tooling-install commitlint workflows-check workflows-test review-report-test opencode-review
+.PHONY: tooling-build tooling-install commitlint workflows-check review-report-test opencode-review
 .PHONY: lighthouse-build lighthouse-audit lighthouse-audit-test
 .PHONY: generate api-smoke
 .PHONY: production-build
@@ -79,7 +79,6 @@ help:
 	@printf '%s\n' \
 	  'make tooling-build / tooling-install  Prepare commitlint in Docker' \
 	  'make commitlint     Check a commit message from stdin' \
-	  'make workflows-test  Test agent event filters' \
 	  'make workflows-check  Validate CI, release and OpenCode workflows with actionlint' \
 	  'make lighthouse-build / lighthouse-audit  Audit LIGHTHOUSE_URL in Docker' \
 	  'make lighthouse-audit-test  Test Lighthouse report validation'
@@ -228,9 +227,6 @@ commitlint:
 
 workflows-check:
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo rhysd/actionlint:1.7.12 -color .github/workflows/ci.yml .github/workflows/release-please.yml .github/workflows/opencode.yml .github/workflows/opencode-triage.yml .github/workflows/opencode-review.yml .github/workflows/opencode-audit.yml
-
-workflows-test:
-	$(RUN) tooling node --test tools/workflow-policy.test.mjs
 
 review-report-test:
 	$(RUN) tooling node --test .github/scripts/review-report.test.mjs

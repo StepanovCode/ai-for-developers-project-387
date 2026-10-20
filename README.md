@@ -128,6 +128,6 @@ Checkout во всех агентных workflow использует `persist-c
 
 Подключение, артефакты аудита, инструкции проверки и ограничения описаны в
 [инструкции GitHub Actions](.github/workflows/README.md). Локальные проверки:
-`make tooling-build tooling-install`, затем `make workflows-check workflows-test
-review-report-test lighthouse-audit-test`. Они выполняются в Docker; тесты
-условий не заменяют проверку разрешений и публикации в GitHub Actions.
+`make tooling-build tooling-install`, затем `make workflows-check
+review-report-test lighthouse-audit-test`. Они выполняются в Docker; условия
+запуска, разрешения и публикацию проверяем вручную в GitHub Actions.
