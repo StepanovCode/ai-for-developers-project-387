@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/StepanovCode/ai-for-developers-project-387/compare/v0.1.0...v0.1.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **web:** cache versioned frontend assets ([#19](https://github.com/StepanovCode/ai-for-developers-project-387/issues/19)) ([956b35b](https://github.com/StepanovCode/ai-for-developers-project-387/commit/956b35b6ba23506b19f591b8c5774827df175fc5))
+
 ## 0.1.0 (2026-10-19)
 
 
