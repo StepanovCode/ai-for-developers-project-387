@@ -57,6 +57,9 @@ func NewWebHandler(apiHandler http.Handler, directory string) (http.Handler, err
 					http.NotFound(w, r)
 					return
 				}
+				if strings.HasPrefix(name, "assets/") {
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				}
 				http.ServeContent(w, r, stat.Name(), stat.ModTime(), file)
 				return
 			}
