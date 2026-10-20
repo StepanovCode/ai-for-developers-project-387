@@ -7,8 +7,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
   issues: write
+  # Granted for assignment compliance; use_github_token skips OIDC exchange.
+  id-token: write
 
 concurrency:
   group: opencode-lighthouse-audit
