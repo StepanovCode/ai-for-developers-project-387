@@ -67,13 +67,24 @@ PAT владельца, поэтому его события от аккаунт
 | Агентный workflow | Права `GITHUB_TOKEN` | Зачем |
 |---|---|---|
 | OpenCode, Issue Triage | `id-token: write` | OIDC-обмен на токен установленного OpenCode GitHub App |
-| PR Review | `contents: read`, `pull-requests: write` | Чтение кода и публикация итогового комментария отдельным шагом |
-| Lighthouse Audit | `contents: read`, `issues: write` | Чтение кода и создание/обновление issue; коммиты и PR не нужны |
+| PR Review | `contents: read`, `issues: read`, `pull-requests: write`, `id-token: write` | Чтение кода и связанных issue, публикация комментария доверенными API-шагами; CLI без GitHub-токена |
+| Lighthouse Audit | `contents: write`, `pull-requests: write`, `issues: write`, `id-token: write` | Явный набор прав по требованиям задания; агент публикует результаты в issue |
+
+Более широкие права аудита и `id-token: write` у ревью выданы для точного
+соответствия требованиям задания, а не потому, что все эти права технически
+нужны сценарию. В ревью OIDC не используется; аудит сохраняет
+`use_github_token: true` и тоже не выполняет OIDC-обмен. Права командного
+workflow и триажа остаются отдельными.
 
 Права `GITHUB_TOKEN`, права установленного GitHub App и разрешения инструментов
 OpenCode — разные уровни. Малые права токена раннера не сужают права App.
 У ревью инструменты ограничены чтением и поиском, токен GitHub не передаётся
-модели; команды, триаж и аудит используют стандартного агента `build`.
+CLI; ключ провайдера передаётся в его контейнер. Команды, триаж и аудит используют
+стандартного агента `build`. Инструкция ревью явно задана в `with.prompt`
+workflow и через обязательный вход локального composite action передаётся
+в `make opencode-review`. Этот путь сохраняет чтение без изменений кода,
+проверку завершённого сообщения и текущего head перед публикацией: upstream
+GitHub Action сам публикует ответ без такой детерминированной проверки head.
 Запреты в их промптах описывают задачу, но не заменяют ограничения токена
 или [разрешения инструментов](https://opencode.ai/docs/permissions/).
 Checkout во всех агентных workflow использует `persist-credentials: false`.
@@ -106,6 +117,14 @@ Checkout во всех агентных workflow использует `persist-c
 
 ### Самооценка работы с агентом
 
+Исторические примеры ниже подтверждают прежние прогоны. Актуальные прогоны
+новой конфигурации и результаты проверки собраны в
+[PR «Изменения workflow»](https://github.com/StepanovCode/ai-for-developers-project-387/pull/23).
+Успешный actionlint сам по себе не подтверждает интеграцию. Реальным ручным
+прогоном аудита проверяют права токена, артефакты и публикацию результата.
+Cron на `main` и обновление release-PR после слияния этих изменений
+проверяют отдельно.
+
 - **С первого прохода после согласования критериев:** агент подготовил
   [исправление сообщений о недоступном слоте](https://github.com/StepanovCode/ai-for-developers-project-387/pull/12)
   одним коммитом, с регрессионными тестами и проверками frontend/backend.
@@ -125,9 +144,31 @@ Checkout во всех агентных workflow использует `persist-c
   после замечаний доработаны изоляция конфигурации, права токена и проверка
   завершения именно публикуемого сообщения. Конфигурация и зелёный actionlint
   сами по себе не подтвердили интеграцию: потребовались реальные прогоны.
+- **Исправление отдельным коммитом после обсуждения:**
+  [PR «fix(web): cache versioned frontend assets»](https://github.com/StepanovCode/ai-for-developers-project-387/pull/19)
+  закрывает [задачу кэширования frontend](https://github.com/StepanovCode/ai-for-developers-project-387/issues/18).
+  До исправления опубликованы [общее ревью](https://github.com/StepanovCode/ai-for-developers-project-387/pull/19#pullrequestreview-5586109828)
+  (тело review, а не отдельный issue-comment) и
+  [команда `/oc` в diff](https://github.com/StepanovCode/ai-for-developers-project-387/pull/19#discussion_r4325835032).
+  Агент добавил [отдельный коммит](https://github.com/StepanovCode/ai-for-developers-project-387/pull/19/commits/1108e57258d96eb37d8012db20b7c8696145b655).
+  [Первый прогон](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39435288697)
+  успел отправить коммит, но был отменён после таймаута на запросе
+  `external_directory` для конфигурации авторизации `gh`.
+  [Успешный повторный прогон](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39438456562)
+  подготовил только итоговый текст.
+- **Проверяемые результаты автоматизации:** успешное
+  [авторевью с замечаниями](https://github.com/StepanovCode/ai-for-developers-project-387/pull/17#issuecomment-6272592143)
+  связано с [прогоном `pull_request`](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39288688525).
+  Настоящий [ночной прогон `schedule`](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39394621089)
+  сохранил артефакты и опубликовал [отчёт с находкой кэширования](https://github.com/StepanovCode/ai-for-developers-project-387/issues/15),
+  из которой получилась задача исправления выше. После слияния исправления
+  [release-please](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39446775367)
+  создал [release-PR 0.1.1](https://github.com/StepanovCode/ai-for-developers-project-387/pull/20).
+  Это подтверждает создание PR, а не публикацию релиза; повторный Lighthouse
+  после исправления кэша и проверка деплоя не выполнялись.
 
 Подключение, артефакты аудита, инструкции проверки и ограничения описаны в
 [инструкции GitHub Actions](.github/workflows/README.md). Локальные проверки:
-`make tooling-build tooling-install`, затем `make workflows-check workflows-test
-review-report-test lighthouse-audit-test`. Они выполняются в Docker; тесты
-условий не заменяют проверку разрешений и публикации в GitHub Actions.
+`make tooling-build tooling-install`, затем `make workflows-check
+review-report-test lighthouse-audit-test`. Они выполняются в Docker; условия
+запуска, разрешения и публикацию проверяем вручную в GitHub Actions.

@@ -1,0 +1,14 @@
+name: OpenCode isolated PR review
+description: Run the pinned OpenCode CLI in Docker without a GitHub token or repository writes.
+inputs:
+  prompt:
+    description: Review instructions supplied explicitly by the calling workflow.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Generate the review report
+      shell: bash
+      env:
+        REVIEW_PROMPT: ${{ inputs.prompt }}
+      run: make opencode-review
