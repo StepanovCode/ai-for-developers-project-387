@@ -75,7 +75,11 @@ pull request — в [opencode-review.yml](opencode-review.yml), ночной а�
 Локальная проверка синтаксиса всех поддерживаемых workflow: `make workflows-check`
 (actionlint в Docker), включена в CI. Условия запуска проверяем вручную
 в GitHub Actions: команды и роли, боты/приложение, PR человека и бота,
-форки, приватный репозиторий, cron и ручной запуск. Установку приложения,
+форки, приватный репозиторий, cron и ручной запуск. Для прав вручную
+сверяем блок `permissions` и `GITHUB_TOKEN Permissions` в логе подготовки
+job; отдельно проверяем, что контейнер ревью не получает GitHub-токен,
+а публикация проходит только для открытого PR с текущим head.
+Установку приложения,
 ключ, права токена и доступ к модели также подтверждаем реальными прогонами.
 
 ### Автоматический разбор новых issue
@@ -130,19 +134,18 @@ Conventional Commits. Агент публикует обоснованные з�
 что проблем не нашёл. Этот запуск не исправляет код, не одобряет и не сливает PR;
 правки по вашим командам выполняет отдельный workflow `OpenCode`.
 
-Авторевью использует документированный `opencode run`, а не GitHub-обработчик
-OpenCode. Сам workflow отсекает инициаторов-ботов; CLI сохранён для изоляции
-модели и отдельной публикации результата. У GitHub-обработчика есть
-дополнительная проверка: инициатор события
-должен иметь `admin` или `write` как collaborator. Для `opencode-agent[bot]`
-GitHub возвращает `none`, поэтому обычный action останавливается до ревью
-на событии бота, даже при `use_github_token: true`. Поэтому CLI-путь не
-следует считать разрешением запускать ревью от имени ботов: это ограничено
-условием workflow.
-Проверка сохранена и в OpenCode v1.19.3:
-[исходник обработчика](https://github.com/anomalyco/opencode/blob/v1.19.3/packages/opencode/src/cli/cmd/github.handler.ts).
+Авторевью использует локальный [composite action](../actions/opencode-review/action.yml)
+с обязательным входом `prompt`. Инструкция видна непосредственно в
+`with.prompt` workflow; action передаёт её через `REVIEW_PROMPT` в
+`make opencode-review`, который вызывает документированный `opencode run`.
+Это сознательное изменение первоначальной идеи использовать upstream
+GitHub Action: тот автоматически публикует ответ без детерминированной
+проверки текущего head. Локальный action сохраняет изолированное чтение,
+парсер завершённого сообщения и отдельную публикацию с проверкой head.
 
-GitHub Actions собирает публичные описание, diff и сообщения коммитов PR.
+Доверенный API-шаг GitHub Actions собирает описание, diff, сообщения
+коммитов PR и тексты с комментариями связанных issue текущего репозитория
+(включая closing references и ссылки в описании PR).
 `make opencode-review` запускает закреплённый `opencode-ai@1.19.3` в Docker.
 Основная и служебная модели — `opencode/deepseek-v4.1-flash`. Инструкция
 находится в `REVIEW_PROMPT`. Агенту доступны только чтение, поиск по файлам
@@ -162,12 +165,14 @@ GitHub Actions собирает публичные описание, diff и с�
 не публикуется.
 Парсер отчёта проверяется командой `make review-report-test` в Docker и CI.
 
-`contents: read` разрешает чтение кода, `pull-requests: write` — публикацию
-комментария. Публичное issue агент читает через веб без GitHub-токена.
-Одних прав чтения недостаточно:
-[GitHub API требует право записи](https://docs.github.com/en/rest/issues/comments#create-an-issue-comment).
-OIDC для этого пути не нужен. `persist-credentials: false` не сохраняет
-токен в Git. Секрет провайдера и лимит времени совпадают с другими workflow
+Точный набор прав ревью: `contents: read`, `issues: read`,
+`pull-requests: write`, `id-token: write`. Токен GitHub используют только
+доверенные API-шаги подготовки контекста и публикации; изолированный CLI
+получает ключ провайдера, но не GitHub-токен. Право `issues: read`
+позволяет собрать контекст связанных issue, `pull-requests: write` —
+опубликовать комментарий. `id-token: write` выдано для соответствия
+требованиям задания; OIDC в CLI-пути не используется.
+`persist-credentials: false` не сохраняет токен в Git. Секрет провайдера и лимит времени совпадают с другими workflow
 OpenCode. Каждый запуск обращается к провайдеру модели.
 
 Для проверки откройте новый PR из ветки репозитория и дождитесь результата
@@ -179,8 +184,9 @@ OpenCode. Каждый запуск обращается к провайдеру
 
 ### Ночная проверка Lighthouse
 
-Workflow [OpenCode Lighthouse Audit](opencode-audit.yml) ежедневно запускается
-в 03:17 UTC (06:17 по Москве). Ручной запуск доступен через Actions →
+Workflow [OpenCode Lighthouse Audit](opencode-audit.yml) запускается
+один раз в сутки по cron `17 3 * * *`: в 03:17 UTC (06:17 по Москве).
+Ручной запуск доступен через Actions →
 OpenCode Lighthouse Audit → Run workflow. Для активации обоих событий файл
 должен находиться в основной ветке репозитория проекта 387. Условие job
 разрешает `schedule` без проверки `sender`, а `workflow_dispatch` — только
@@ -216,10 +222,13 @@ Best Practices и SEO. Перед измерением выполняется д
 Отдельный шаг проверяет, что заявленная issue существует, открыта и содержит
 маркер текущего запуска; при находках без опубликованной issue job падает.
 
-Агент получает `GITHUB_TOKEN` с `contents: read` и `issues: write` через
-`use_github_token: true`. Прав записи в код и pull request нет. Токен ограничен
-текущим репозиторием; доступ к трекеру другого проекта не используется.
-OIDC-обмен в этом режиме не выполняется, поэтому `id-token: write` не выдано.
+Аудиту явно выданы `contents: write`, `pull-requests: write`, `issues: write`
+и `id-token: write` для точного соответствия требованиям задания.
+Для публикации отчёта в issue технически не нужен весь этот набор прав. Агент получает `GITHUB_TOKEN`
+через сохранённое `use_github_token: true`, поэтому OIDC-обмен не выполняется
+даже при выданном `id-token: write`. Токен ограничен текущим репозиторием;
+доступ к трекеру другого проекта не используется. Права workflow команд
+и триажа этим изменением не расширяются.
 Публикация сессии OpenCode отключена. Одновременно выполняется только один
 аудит; максимальная длительность job — 25 минут. OpenCode явно разрешён
 доступ к внешнему временному каталогу отчётов этого запуска: интерактивного
@@ -257,8 +266,38 @@ make workflows-check
 [GitHub schedule](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule),
 [Lighthouse CLI](https://github.com/GoogleChrome/lighthouse#using-the-node-cli).
 
+### Подтверждённые прогоны и ожидаемая проверка
+
+Историческое авторевью действительно публиковало замечания: например,
+[успешный прогон `pull_request`](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39288688525)
+и [его комментарий](https://github.com/StepanovCode/ai-for-developers-project-387/pull/17#issuecomment-6272592143).
+Это статическое ревью, без запуска тестов самим агентом.
+
+[Ночной прогон](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39394621089)
+успешно выполнился именно по `schedule`, а не ручному запуску.
+Проверено наличие [артефакта исходных отчётов](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39394621089/artifacts/12250913098)
+и [артефакта анализа](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39394621089/artifacts/12250992896);
+содержимое ZIP независимо не перепроверялось. Текст результата опубликован
+в [issue аудита](https://github.com/StepanovCode/ai-for-developers-project-387/issues/15).
+Находка кэширования стала [задачей исправления](https://github.com/StepanovCode/ai-for-developers-project-387/issues/18),
+закрытой [PR с исправлением](https://github.com/StepanovCode/ai-for-developers-project-387/pull/19).
+Проверка деплоя и повторный Lighthouse после этого исправления не выполнялись.
+
+**Новая конфигурация ещё ожидает runtime-проверки:** реального авторевью
+с локальным composite action и запуска аудита с обновлёнными правами.
+Статические проверки не подтверждают эту интеграцию. После слияния изменений
+отдельно предстоит подтвердить cron на `main` и обновление release-PR;
+слияния в рамках этой проверки не выполняются.
+
 ### Релизы
 
 Workflow `release-please` запускается после push в `main`. Настройки,
 подготовка `RELEASE_PLEASE_TOKEN` и проверка release-PR описаны
 в [инструкции по релизам](../../docs/releases.md).
+
+После слияния исторического PR с исправлением кэша успешный
+[прогон release-please](https://github.com/StepanovCode/ai-for-developers-project-387/actions/runs/39446775367)
+создал [release-PR 0.1.1](https://github.com/StepanovCode/ai-for-developers-project-387/pull/20),
+что подтверждено логом создания PR. Автором в GitHub отображается владелец,
+поскольку используется PAT. Это не подтверждает слияние release-PR
+или публикацию релиза 0.1.1.
